@@ -12,7 +12,7 @@ let sut: CreateNoteUseCase
 let user: User
 
 
-describe('Register use cases tests', () => {
+describe('Create note use case tests', () => {
   beforeEach(async () => {
     notesRepository = new InMemoryNotesRepository()
     usersRepository = new InMemoryUsersRepository()

@@ -7,7 +7,7 @@ import { RegisterUseCase } from './register'
 let usersRepository: InMemoryUsersRepository
 let sut: RegisterUseCase
 
-describe('Register use cases tests', () => {
+describe('Register use case tests', () => {
   beforeEach(() => {
     usersRepository = new InMemoryUsersRepository()
     sut = new RegisterUseCase(usersRepository)

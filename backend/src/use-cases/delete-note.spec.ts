@@ -1,22 +1,21 @@
 import { InMemoryNotesRepository } from '@/repositories/in-memory/in-memory-notes-repository'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { CreateNoteUseCase } from './create-note'
 import { InMemoryUsersRepository } from '@/repositories/in-memory/in-memory-users-repository'
 import type { User } from '@prisma/client'
-import { FetchNotesUseCase } from './fetch-notes'
+import { DeleteNoteUseCase } from './delete-note'
 
 let notesRepository: InMemoryNotesRepository
 let usersRepository: InMemoryUsersRepository
-let sut: FetchNotesUseCase
+let sut: DeleteNoteUseCase
 
 let user: User
 
 
-describe('Fetch notes use case tests', () => {
+describe('Delete note use case tests', () => {
   beforeEach(async () => {
     notesRepository = new InMemoryNotesRepository()
     usersRepository = new InMemoryUsersRepository()
-    sut = new FetchNotesUseCase(notesRepository)
+    sut = new DeleteNoteUseCase(notesRepository)
 
     user = await usersRepository.create({
       name: "Jonny Test",
@@ -26,14 +25,14 @@ describe('Fetch notes use case tests', () => {
     
   })
 
-  it('should be able to fetch a user notes', async () => {
+  it('should be able to delete a user note', async () => {
     await notesRepository.create({
         title: "Test note 1",
         content: "testing the note creation and verify it's working",
         userId: user.id
     })
 
-    await notesRepository.create({
+    const noteToDelete = await notesRepository.create({
         title: "Test note 2",
         content: "testing the note creation and verify it's working",
         userId: user.id
@@ -45,12 +44,13 @@ describe('Fetch notes use case tests', () => {
         userId: user.id
     })
 
-    const { notes } = await sut.execute({
-      userId: user.id
+    await sut.execute({
+      noteId: noteToDelete.id
     })
 
-    expect(notes[0].id).toEqual(expect.any(String))
-    expect(notes).toHaveLength(3)
+    const notes = notesRepository.items
+
+    expect(notes).toHaveLength(2)
   })
 
 })

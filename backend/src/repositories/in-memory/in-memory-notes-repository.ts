@@ -44,6 +44,14 @@ export class InMemoryNotesRepository implements NotesRepository {
     return note
   }
 
+  async delete(id: string) {
+    const noteIndex = this.items.findIndex((item) => item.id === id)
+
+    if (noteIndex !== -1) {
+      this.items.splice(noteIndex, 1)
+    }
+  }
+
   async searchMany(query: string) {
     return this.items
       .filter((note) => note.title.includes(query))
