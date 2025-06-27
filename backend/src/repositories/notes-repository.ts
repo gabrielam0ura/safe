@@ -2,9 +2,9 @@ import type { Note, Prisma } from "@prisma/client"
 
 export interface NotesRepository {
     findById(id: string): Promise<Note | null>
-    create(data: Prisma.UserCreateInput): Promise<Note>
+    create(data: Prisma.NoteUncheckedCreateInput): Promise<Note>
     save(note: Note): Promise<Note>
-    findManyByUserId(userId: string): Promise<Number>
+    findManyByUserId(userId: string): Promise<Note[]>
     searchMany(query: string): Promise<Note[]>
     searchManyByDate(date: Date): Promise<Note[]>
 }
