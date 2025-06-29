@@ -1,4 +1,5 @@
 import { makeCreateNoteUseCase } from '@/use-cases/factories/make-create-note-use-case'
+import { prisma } from '@/lib/prisma'
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import { z } from 'zod'
 
@@ -11,12 +12,23 @@ export async function create(request: FastifyRequest, reply: FastifyReply) {
   const { title, content } =
     createGymBodySchema.parse(request.body)
 
+  // Buscar o usuário padrão
+  const defaultUser = await prisma.user.findUnique({
+    where: {
+      email: 'default@example.com'
+    }
+  })
+
+  if (!defaultUser) {
+    return reply.status(500).send({ error: 'Usuário padrão não encontrado. Execute o seed primeiro.' })
+  }
+
   const createGymUseCase = makeCreateNoteUseCase()
 
   await createGymUseCase.execute({
     title,
     content,
-    userId: "default-user-id",
+    userId: defaultUser.id,
   })
 
   return reply.status(201).send()

@@ -12,7 +12,8 @@
     "lint": "biome lint --write .",
     "format": "biome format --write .",
     "check": "biome check --write .",
-    "build": "tsup src --out-dir build"
+    "build": "tsup src --out-dir build",
+    "seed": "tsx prisma/seed.ts"
   },
   "keywords": [],
   "author": "",
