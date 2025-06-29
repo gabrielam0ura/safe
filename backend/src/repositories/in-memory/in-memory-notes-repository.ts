@@ -59,7 +59,12 @@ export class InMemoryNotesRepository implements NotesRepository {
   }
 
   async searchManyByDate(date: Date) {
-    return this.items
-    .filter((note) => note.createdAt === date)
+    return this.items.filter((note) => {
+      return (
+        note.createdAt.getFullYear() === date.getFullYear() &&
+        note.createdAt.getMonth() === date.getMonth() &&
+        note.createdAt.getDate() === date.getDate()
+      )
+    })
   }
 }

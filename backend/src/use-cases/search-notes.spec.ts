@@ -2,20 +2,20 @@ import { InMemoryNotesRepository } from '@/repositories/in-memory/in-memory-note
 import { beforeEach, describe, expect, it } from 'vitest'
 import { InMemoryUsersRepository } from '@/repositories/in-memory/in-memory-users-repository'
 import type { User } from '@prisma/client'
-import { FetchNotesUseCase } from './fetch-notes'
+import { SearchNotesUseCase } from './search-notes'
 
 let notesRepository: InMemoryNotesRepository
 let usersRepository: InMemoryUsersRepository
-let sut: FetchNotesUseCase
+let sut: SearchNotesUseCase
 
 let user: User
 
 
-describe('Fetch notes use case tests', () => {
+describe('Search notes use case tests', () => {
   beforeEach(async () => {
     notesRepository = new InMemoryNotesRepository()
     usersRepository = new InMemoryUsersRepository()
-    sut = new FetchNotesUseCase(notesRepository)
+    sut = new SearchNotesUseCase(notesRepository)
 
     user = await usersRepository.create({
       name: "Jonny Test",
@@ -25,7 +25,7 @@ describe('Fetch notes use case tests', () => {
     
   })
 
-  it('should be able to fetch a user notes', async () => {
+  it('should be able to search a user notes by query', async () => {
     await notesRepository.create({
         title: "Test note 1",
         content: "testing the note creation and verify it's working",
@@ -45,11 +45,11 @@ describe('Fetch notes use case tests', () => {
     })
 
     const { notes } = await sut.execute({
-      userId: user.id
+        query: "3"
     })
 
     expect(notes[0].id).toEqual(expect.any(String))
-    expect(notes).toHaveLength(3)
+    expect(notes).toHaveLength(1)
   })
 
 })

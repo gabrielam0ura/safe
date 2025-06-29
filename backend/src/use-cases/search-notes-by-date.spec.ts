@@ -1,21 +1,22 @@
 import { InMemoryNotesRepository } from '@/repositories/in-memory/in-memory-notes-repository'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { InMemoryUsersRepository } from '@/repositories/in-memory/in-memory-users-repository'
 import type { User } from '@prisma/client'
-import { FetchNotesUseCase } from './fetch-notes'
+import { SearchNotesByDateUseCase } from './search-notes-by-date'
 
 let notesRepository: InMemoryNotesRepository
 let usersRepository: InMemoryUsersRepository
-let sut: FetchNotesUseCase
+let sut: SearchNotesByDateUseCase
 
 let user: User
 
 
-describe('Fetch notes use case tests', () => {
+describe('Seacth notes by date use case tests', () => {
   beforeEach(async () => {
     notesRepository = new InMemoryNotesRepository()
     usersRepository = new InMemoryUsersRepository()
-    sut = new FetchNotesUseCase(notesRepository)
+    sut = new SearchNotesByDateUseCase(notesRepository)
+    vi.useFakeTimers()
 
     user = await usersRepository.create({
       name: "Jonny Test",
@@ -25,7 +26,12 @@ describe('Fetch notes use case tests', () => {
     
   })
 
-  it('should be able to fetch a user notes', async () => {
+  afterEach( () => {
+    vi.useRealTimers()
+  })
+
+  it('should be able to search a user notes in a specific date', async () => {
+    vi.setSystemTime(new Date(2024, 10, 25))
     await notesRepository.create({
         title: "Test note 1",
         content: "testing the note creation and verify it's working",
@@ -38,6 +44,8 @@ describe('Fetch notes use case tests', () => {
         userId: user.id
     })
 
+    vi.setSystemTime(new Date(2024, 11, 25))
+
     await notesRepository.create({
         title: "Test note 3",
         content: "testing the note creation and verify it's working",
@@ -45,11 +53,11 @@ describe('Fetch notes use case tests', () => {
     })
 
     const { notes } = await sut.execute({
-      userId: user.id
+        date: new Date(2024, 10, 25)
     })
 
     expect(notes[0].id).toEqual(expect.any(String))
-    expect(notes).toHaveLength(3)
+    expect(notes).toHaveLength(2)
   })
 
 })
