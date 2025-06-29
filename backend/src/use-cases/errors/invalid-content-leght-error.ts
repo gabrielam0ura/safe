@@ -1,5 +1,5 @@
 export class InvalidContentLenghtError extends Error {
     constructor() {
-      super('O conteúdo deve ter entre 25 e 300 caracteres.')
+      super('Content shoud be longer than 25 and shorter than 300 characteres.')
     }
   }

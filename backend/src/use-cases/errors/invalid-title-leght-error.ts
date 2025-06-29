@@ -1,5 +1,5 @@
 export class InvalidTitleLeghtError extends Error {
     constructor() {
-      super('O título deve ter entre 3 e 30 caracteres.')
+      super('Title shoud be longer than 3 and shorter than 30 characteres.')
     }
   }
