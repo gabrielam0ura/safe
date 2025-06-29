@@ -7,5 +7,5 @@ export interface NotesRepository {
     delete(id: string): Promise<void>
     findManyByUserId(userId: string): Promise<Note[]>
     searchMany(query: string, userId: string): Promise<Note[]>
-    searchManyByDate(date: Date): Promise<Note[]>
+    searchManyByDate(startDate: Date, endDate: Date,  userId: string): Promise<Note[]>
 }

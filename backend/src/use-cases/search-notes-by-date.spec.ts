@@ -53,7 +53,9 @@ describe('Seacth notes by date use case tests', () => {
     })
 
     const { notes } = await sut.execute({
-        date: new Date(2024, 10, 25)
+      startDate: new Date(2024, 10, 25),
+      endDate: new Date(2024, 10, 25),
+      userId: user.id
     })
 
     expect(notes[0].id).toEqual(expect.any(String))

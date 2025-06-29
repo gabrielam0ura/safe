@@ -58,12 +58,12 @@ export class InMemoryNotesRepository implements NotesRepository {
       .filter((note) => note.title.includes(query) && note.userId === userId)
   }
 
-  async searchManyByDate(date: Date) {
+  async searchManyByDate(startDate: Date, endDate: Date, userId: string) {
     return this.items.filter((note) => {
       return (
-        note.createdAt.getFullYear() === date.getFullYear() &&
-        note.createdAt.getMonth() === date.getMonth() &&
-        note.createdAt.getDate() === date.getDate()
+        note.createdAt >= startDate &&
+        note.createdAt <= endDate &&
+        note.userId === userId
       )
     })
   }

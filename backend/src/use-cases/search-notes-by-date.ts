@@ -2,7 +2,9 @@ import type { NotesRepository } from '@/repositories/notes-repository'
 import type { Note } from '@prisma/client'
 
 interface SearchNotesByDateUseCaseRequest {
-  date: Date
+  startDate: Date
+  endDate: Date
+  userId: string
 }
 
 interface SearchNotesByDateUseCaseResponse {
@@ -13,9 +15,11 @@ export class SearchNotesByDateUseCase {
   constructor(private notesRepository: NotesRepository) {}
 
   async execute({
-    date,
+    startDate,
+    endDate,
+    userId
   }: SearchNotesByDateUseCaseRequest): Promise<SearchNotesByDateUseCaseResponse> {
-    const notes = await this.notesRepository.searchManyByDate(date)
+    const notes = await this.notesRepository.searchManyByDate(startDate, endDate, userId)
 
     return {
       notes,

@@ -49,18 +49,14 @@ export class PrismaNotesRepository implements NotesRepository {
     return notes
   }
 
-  async searchManyByDate(date: Date){
-    const startOfDay = new Date(date)
-    startOfDay.setHours(0, 0, 0, 0)
-    
-    const endOfDay = new Date(date)
-    endOfDay.setHours(23, 59, 59, 999)
+  async searchManyByDate(startDate: Date, endDate: Date, userId: string){
     const notes = prisma.note.findMany({
         where: {
           createdAt: {
-            gte: startOfDay,
-            lte: endOfDay,
-          }
+            gte: startDate,
+            lte: endDate,
+          },
+          userId,
         },
       })
   
