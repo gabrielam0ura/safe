@@ -4,6 +4,8 @@ import { CreateNoteUseCase } from './create-note'
 import { InMemoryUsersRepository } from '@/repositories/in-memory/in-memory-users-repository'
 import type { User } from '@prisma/client'
 import { any } from 'zod'
+import { InvalidTitleLeghtError } from './errors/invalid-title-leght-error'
+import { InvalidContentLenghtError } from './errors/invalid-content-leght-error'
 
 let notesRepository: InMemoryNotesRepository
 let usersRepository: InMemoryUsersRepository
@@ -34,6 +36,40 @@ describe('Create note use case tests', () => {
     })
 
     expect(note.id).toEqual(expect.any(String))
+  })
+
+  it('should not be able to create a new note with shorter then bottom limit caracteres title', async () => {
+
+    await expect(() => sut.execute({
+      title: "Te",
+      content: "testing the note creation and verify it's working",
+      userId: user.id
+    })).rejects.toBeInstanceOf(InvalidTitleLeghtError)
+  })
+
+  it('should not be able to create a new note with longer then top limit caracteres title', async () => {
+
+    await expect(() => sut.execute({
+      title: "titulo de teste muito longo para ter mais de 30 caracteres e subir o erro",
+      content: "testing the note creation and verify it's working",
+      userId: user.id
+    })).rejects.toBeInstanceOf(InvalidTitleLeghtError)
+  })
+  it('should not be able to create a new note with shorter then bottom limit caracteres content', async () => {
+
+    await expect(() => sut.execute({
+      title: "Test note",
+      content: "testing the ",
+      userId: user.id
+    })).rejects.toBeInstanceOf(InvalidContentLenghtError)
+  })
+  it('should not be able to create a new note with shorter then top limit caracteres content', async () => {
+
+    await expect(() => sut.execute({
+      title: "Test note",
+      content: "nota muitooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo grande ",
+      userId: user.id
+    })).rejects.toBeInstanceOf(InvalidContentLenghtError)
   })
 
 })

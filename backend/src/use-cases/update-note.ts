@@ -1,6 +1,8 @@
 import type { NotesRepository } from "@/repositories/notes-repository"
 import type { Note } from "@prisma/client"
 import { ResourceNotFoundError } from "./errors/resource-not-found-error"
+import { InvalidTitleLeghtError } from "./errors/invalid-title-leght-error"
+import { InvalidContentLenghtError } from "./errors/invalid-content-leght-error"
 
 interface UpdateNoteUseCaseRequest {
   noteId: string
@@ -25,6 +27,20 @@ export class UpdateNoteUseCase {
 
     if (!note) {
       throw new ResourceNotFoundError()
+    }
+
+    if (title !== undefined) {
+      if (title.trim().length < 3 || title.trim().length > 30) {
+        throw new InvalidTitleLeghtError()
+      }
+      note.title = title
+    }
+
+    if (content !== undefined) {
+      if (content.trim().length < 25 || content.trim().length > 300) {
+        throw new InvalidContentLenghtError()
+      }
+      note.content = content
     }
 
     note.title = title ? title : note.title

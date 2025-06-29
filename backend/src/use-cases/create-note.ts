@@ -1,5 +1,7 @@
 import type { NotesRepository } from '@/repositories/notes-repository'
 import type { Note } from '@prisma/client'
+import { InvalidTitleLeghtError } from './errors/invalid-title-leght-error'
+import { InvalidContentLenghtError } from './errors/invalid-content-leght-error'
 
 interface CreateNoteUseCaseRequest {
     userId: string
@@ -19,9 +21,18 @@ export class CreateNoteUseCase {
     content,
     userId
   }: CreateNoteUseCaseRequest): Promise<CreateNoteUseCaseResponse> {
+
+    if (!title || title.trim().length < 3 || title.trim().length > 30) {
+      throw new InvalidTitleLeghtError()
+    }
+
+    if (!content || content.trim().length < 25 || content.trim().length > 300) {
+      throw new InvalidContentLenghtError()
+    }
+
     const note = await this.notesRepository.create({
-        title,
-        content,
+        title: title.trim(),
+        content: content.trim(),
         userId,
     })
 

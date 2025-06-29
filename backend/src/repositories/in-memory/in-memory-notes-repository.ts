@@ -12,7 +12,7 @@ export class InMemoryNotesRepository implements NotesRepository {
       content: data.content,
       userId: data.userId,
       createdAt: new Date(),
-      updatedAt: null,
+      updatedAt: new Date(),
     }
 
     this.items.push(note)
