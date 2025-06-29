@@ -12,7 +12,7 @@ interface UpdateNoteUseCaseResponse {
   note: Note
 }
 
-export class UpdateTransactionUseCase {
+export class UpdateNoteUseCase {
   constructor(private notesRepository: NotesRepository) {}
 
   async execute({

@@ -38,7 +38,7 @@ export class InMemoryNotesRepository implements NotesRepository {
     const noteIndex = this.items.findIndex((item) => item.id === note.id)
 
     if (noteIndex >= 0) {
-      note.updatedAt = new Date
+      note.updatedAt = new Date()
       this.items[noteIndex] = note
     }
 
