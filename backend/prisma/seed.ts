@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client'
-import { hash } from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
@@ -9,9 +8,9 @@ async function main() {
     where: { email: 'default@example.com' },
     update: {},
     create: {
-      name: 'Safe User',
-      email: 'default@example.com',
-      password_hash: "hashedpassword",
+      name: 'SafeUser',
+      email: 'safeuser@user.com',
+      password_hash: "Saf3Password",
     },
   })
 
