@@ -6,6 +6,6 @@ export interface NotesRepository {
     save(note: Note): Promise<Note>
     delete(id: string): Promise<void>
     findManyByUserId(userId: string): Promise<Note[]>
-    searchMany(query: string): Promise<Note[]>
+    searchMany(query: string, userId: string): Promise<Note[]>
     searchManyByDate(date: Date): Promise<Note[]>
 }

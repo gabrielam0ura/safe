@@ -36,12 +36,13 @@ export class PrismaNotesRepository implements NotesRepository {
       return notes
   }
 
-  async searchMany(query: string) {
+  async searchMany(query: string, userId: string) {
     const notes = prisma.note.findMany({
       where: {
         title: {
           contains: query,
         },
+        userId,
       },
     })
 

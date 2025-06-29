@@ -3,6 +3,7 @@ import type { Note } from '@prisma/client'
 
 interface SearchNotesUseCaseRequest {
   query: string
+  userId: string
 }
 
 interface SearchNotesUseCaseResponse {
@@ -14,8 +15,9 @@ export class SearchNotesUseCase {
 
   async execute({
     query,
+    userId
   }: SearchNotesUseCaseRequest): Promise<SearchNotesUseCaseResponse> {
-    const notes = await this.notesRepository.searchMany(query)
+    const notes = await this.notesRepository.searchMany(query, userId)
 
     return {
       notes,

@@ -45,7 +45,8 @@ describe('Search notes use case tests', () => {
     })
 
     const { notes } = await sut.execute({
-        query: "3"
+      query: "3",
+      userId: user.id
     })
 
     expect(notes[0].id).toEqual(expect.any(String))

@@ -53,9 +53,9 @@ export class InMemoryNotesRepository implements NotesRepository {
     }
   }
 
-  async searchMany(query: string) {
+  async searchMany(query: string, userId: string) {
     return this.items
-      .filter((note) => note.title.includes(query))
+      .filter((note) => note.title.includes(query) && note.userId === userId)
   }
 
   async searchManyByDate(date: Date) {
