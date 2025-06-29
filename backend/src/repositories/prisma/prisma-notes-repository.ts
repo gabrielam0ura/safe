@@ -69,7 +69,10 @@ export class PrismaNotesRepository implements NotesRepository {
       where: {
         id: data.id,
       },
-      data,
+      data: {
+        title: data.title,
+        content: data.content,
+      },
     })
 
     return note

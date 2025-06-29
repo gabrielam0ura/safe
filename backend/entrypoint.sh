@@ -1,4 +1,4 @@
-#/bin/sh
+#!/bin/sh
 
 echo "Aguardando DB..."
 sleep 5

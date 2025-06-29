@@ -22,31 +22,35 @@ export class UpdateNoteUseCase {
     content,
     title
   }: UpdateNoteUseCaseRequest): Promise<UpdateNoteUseCaseResponse> {
-    const note =
-      await this.notesRepository.findById(noteId)
+    const note = await this.notesRepository.findById(noteId)
 
     if (!note) {
       throw new ResourceNotFoundError()
     }
 
+    const updateData: Partial<Note> = {}
+
     if (title !== undefined) {
       if (title.trim().length < 3 || title.trim().length > 30) {
         throw new InvalidTitleLeghtError()
       }
-      note.title = title
+      updateData.title = title
     }
 
     if (content !== undefined) {
       if (content.trim().length < 25 || content.trim().length > 300) {
         throw new InvalidContentLenghtError()
       }
-      note.content = content
+      updateData.content = content
     }
 
-    note.title = title ? title : note.title
-    note.content = content ? content : note.content
-
-    await this.notesRepository.save(note)
+    if (Object.keys(updateData).length > 0) {
+      const updatedNote = await this.notesRepository.save({
+        ...note,
+        ...updateData
+      })
+      return { note: updatedNote }
+    }
 
     return { note }
   }

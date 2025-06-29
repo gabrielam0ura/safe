@@ -3,7 +3,7 @@ import { prisma } from "./prisma"
 export async function callDefaultUserId(): Promise<string> {
     const defaultUser = await prisma.user.findUnique({
         where: {
-          email: 'default@example.com'
+          email: 'safeuser@user.com'
         }
       })
     
