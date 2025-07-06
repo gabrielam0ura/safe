@@ -23,3 +23,6 @@ flutter:
 
   assets:
     - assets/Safe.svg
+    - assets/add.svg
+    - assets/delete.svg
+    - assets/edit.svg

@@ -3,7 +3,7 @@ import '../styles.dart';
 import 'safe_logo.dart';
 
 class SafeAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const SafeAppBar({Key? key}) : super(key: key);
+  const SafeAppBar({super.key});
 
   @override
   Size get preferredSize => const Size.fromHeight(121);

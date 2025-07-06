@@ -5,6 +5,8 @@ import 'widgets/safe_logo.dart';
 import 'utils/notifier.dart';
 
 class Login extends StatefulWidget {
+  const Login({super.key});
+
   @override
   _LoginState createState() => _LoginState();
 }

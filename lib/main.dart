@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login.dart';
+import 'home.dart';
 import 'styles.dart';
 
 void main() {
@@ -18,7 +18,8 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: backgroundColor,
         useMaterial3: true,
       ),
-      home: Login(),
+      home: Home(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
