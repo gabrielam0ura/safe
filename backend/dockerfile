@@ -1,6 +1,7 @@
 FROM node:22
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN apt-get update && apt-get install -y bash
 
 WORKDIR /app
 
@@ -14,4 +15,4 @@ RUN pnpm install
 
 EXPOSE 3333
 
-CMD ["sh", "./entrypoint.sh"]
+CMD ["bash", "./entrypoint.sh"]
