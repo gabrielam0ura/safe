@@ -59,7 +59,7 @@ describe('Create note use case tests', () => {
 
     await expect(() => sut.execute({
       title: "Test note",
-      content: "testing the ",
+      content: "test ",
       userId: user.id
     })).rejects.toBeInstanceOf(InvalidContentLenghtError)
   })

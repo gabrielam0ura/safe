@@ -38,7 +38,7 @@ export class UpdateNoteUseCase {
     }
 
     if (content !== undefined) {
-      if (content.trim().length < 25 || content.trim().length > 300) {
+      if (content.trim().length < 10 || content.trim().length > 300) {
         throw new InvalidContentLenghtError()
       }
       updateData.content = content
