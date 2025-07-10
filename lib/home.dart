@@ -174,7 +174,7 @@ class _HomeState extends State<Home> {
                             hintStyle: TextStyle(color: Color(0xFF2E808C)),
                             border: InputBorder.none,
                             isCollapsed: true,
-                            contentPadding: EdgeInsets.symmetric(vertical: 10),
+                            contentPadding: EdgeInsets.symmetric(vertical: 12),
                           ),
                         ),
                       ),
