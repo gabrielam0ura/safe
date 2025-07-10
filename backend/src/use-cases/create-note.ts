@@ -26,7 +26,7 @@ export class CreateNoteUseCase {
       throw new InvalidTitleLeghtError()
     }
 
-    if (!content || content.trim().length < 25 || content.trim().length > 300) {
+    if (!content || content.trim().length < 10 || content.trim().length > 300) {
       throw new InvalidContentLenghtError()
     }
 

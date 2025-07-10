@@ -3,6 +3,10 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'login.dart';
 import 'styles.dart';
 import 'widgets/safe_logo.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import 'utils/notifier.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -12,23 +16,102 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  List<Map<String, String>> notes = [
-    {
-      'title': 'Título 1',
-      'note':
-          'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industrys standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.',
-    },
-    {
-      'title': 'Título 2',
-      'note':
-          'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industrys standard dummy text ever since the 1500s, when an unknown printer',
-    },
-    {
-      'title': 'Título 3',
-      'note':
-          'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industrys standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged.',
-    },
-  ];
+  List<Map<String, String>> notes = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadNotes();
+    fetchNotes();
+  }
+
+  void loadNotes() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? jsonNotes = prefs.getString('notes');
+    if (jsonNotes != null) {
+      final List decoded = jsonDecode(jsonNotes);
+      setState(() {
+        notes = decoded
+            .map<Map<String, String>>((e) => Map<String, String>.from(e))
+            .toList();
+        isLoading = false;
+      });
+    } else {
+      setState(() => isLoading = false);
+    }
+  }
+
+  void saveNotes() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('notes', jsonEncode(notes));
+  }
+
+  void fetchNotes() async {
+    try {
+      final response = await http.get(Uri.parse('http://localhost:3333/notes'));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> json = jsonDecode(response.body);
+        final List data = json['notes'] ?? [];
+
+        if (data.isNotEmpty) {
+          setState(() {
+            notes = data
+                .map<Map<String, String>>(
+                  (note) => {
+                    'id': note['id'] ?? '',
+                    'title': note['title'] ?? '',
+                    'note': note['content'] ?? '',
+                  },
+                )
+                .toList();
+            isLoading = false;
+          });
+          saveNotes();
+        } else {
+          setState(() => isLoading = false);
+        }
+      } else {
+        setState(() => isLoading = false);
+      }
+    } catch (_) {
+      setState(() => isLoading = false);
+    }
+  }
+
+  void addNoteLocally(Map<String, String> newNote) {
+    setState(() {
+      notes.add(newNote);
+    });
+    saveNotes();
+  }
+
+  void editNoteLocally(int index, Map<String, String> updatedNote) {
+    setState(() {
+      notes[index] = updatedNote;
+    });
+    saveNotes();
+  }
+
+  void deleteNoteLocally(int index) async {
+    final note = notes[index];
+
+    try {
+      final response = await http.delete(
+        Uri.parse('http://localhost:3333/notes/${note["id"]}'),
+      );
+
+      if (response.statusCode == 204) {
+        setState(() => notes.removeAt(index));
+        saveNotes();
+        showSuccessNotification(context, 'Anotação deletada com sucesso');
+      } else {
+        showErrorNotification(context, 'Erro ao deletar anotação');
+      }
+    } catch (_) {
+      showErrorNotification(context, 'Falha na conexão com o servidor');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,10 +186,10 @@ class _HomeState extends State<Home> {
                             '/add',
                           );
                           if (result != null && result is Map<String, String>) {
-                            setState(() {
-                              notes.add({
-                                'title': result['title']!,
-                                'note': result['note']!,                              });
+                            addNoteLocally({
+                              'id': result['id']!,
+                              'title': result['title']!,
+                              'note': result['note']!,
                             });
                           }
                         },
@@ -120,42 +203,42 @@ class _HomeState extends State<Home> {
                   ),
                   const SizedBox(height: 12),
                   Expanded(
-                    child: ListView.builder(
-                      itemCount: notes.length,
-                      itemBuilder: (context, index) {
-                        return Align(
-                          alignment: Alignment.center,
-                          child: NoteCard(
-                            title: notes[index]['title']!,
-                            note: notes[index]['note']!,
-                            onDelete: () {
-                              setState(() {
-                                notes.removeAt(index);
-                              });
-                            },
-                            onEdit: () async {
-                              final result = await Navigator.pushNamed(
-                                context,
-                                '/edit',
-                                arguments: {
-                                  'initialTitle': notes[index]['title']!,
-                                  'initialNote': notes[index]['note']!,
-                                },
+                    child: isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: notes.length,
+                            itemBuilder: (context, index) {
+                              return Align(
+                                alignment: Alignment.center,
+                                child: NoteCard(
+                                  title: notes[index]['title']!,
+                                  note: notes[index]['note']!,
+                                  onDelete: () => deleteNoteLocally(index),
+                                  onEdit: () async {
+                                    final result = await Navigator.pushNamed(
+                                      context,
+                                      '/edit',
+                                      arguments: {
+                                        'initialTitle': notes[index]['title']!,
+                                        'initialNote': notes[index]['note']!,
+                                      },
+                                    );
+                                    if (result != null &&
+                                        result is Map<String, String>) {
+                                      editNoteLocally(index, {
+                                        'title': result['title']!,
+                                        'note': result['note']!,
+                                      });
+                                    }
+                                  },
+                                ),
                               );
-                              if (result != null &&
-                                  result is Map<String, String>) {
-                                setState(() {
-                                  notes[index] = {
-                                    'title': result['title']!,
-                                    'note': result['note']!,
-                                  };
-                                });
-                              }
                             },
                           ),
-                        );
-                      },
-                    ),
                   ),
                 ],
               ),

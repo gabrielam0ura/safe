@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'home.dart';
 import 'styles.dart';
 import 'widgets/safe_logo.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'utils/notifier.dart';
+import 'dart:convert';
 
 class AddScreen extends StatefulWidget {
   const AddScreen({super.key});
@@ -21,7 +25,7 @@ class _AddScreenState extends State<AddScreen> {
     super.dispose();
   }
 
-  void _addNote() {
+  void _addNote() async {
     final title = _titleController.text.trim();
     final note = _noteController.text.trim();
 
@@ -30,7 +34,29 @@ class _AddScreenState extends State<AddScreen> {
       return;
     }
 
-    Navigator.pop(context, {'title': title, 'note': note});
+    final url = Uri.parse('http://localhost:3333/notes');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'title': title, 'content': note}),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+        showSuccessNotification(context, 'Anotação salva com sucesso');
+        Navigator.pop(context, {
+          'id': data['id'] ?? '',
+          'title': title,
+          'note': note,
+        });
+      } else {
+        showErrorNotification(context, 'Erro ao adicionar anotação.');
+      }
+    } catch (_) {
+      showErrorNotification(context, 'Falha na conexão com o servidor.');
+    }
   }
 
   @override
@@ -74,20 +100,30 @@ class _AddScreenState extends State<AddScreen> {
                 child: TextField(
                   controller: _titleController,
                   style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold),
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                   decoration: const InputDecoration(
                     hintText: 'Título',
                     hintStyle: TextStyle(color: Colors.white54),
                     border: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF23636C), width: 1),
+                      borderSide: BorderSide(
+                        color: Color(0xFF23636C),
+                        width: 1,
+                      ),
                     ),
                     enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF23636C), width: 1),
+                      borderSide: BorderSide(
+                        color: Color(0xFF23636C),
+                        width: 1,
+                      ),
                     ),
                     focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF23636C), width: 1),
+                      borderSide: BorderSide(
+                        color: Color(0xFF23636C),
+                        width: 1,
+                      ),
                     ),
                     filled: true,
                     fillColor: Color(0xFF00252D),
@@ -111,17 +147,23 @@ class _AddScreenState extends State<AddScreen> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                       borderSide: const BorderSide(
-                          color: Color(0xFF23636C), width: 1),
+                        color: Color(0xFF23636C),
+                        width: 1,
+                      ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                       borderSide: const BorderSide(
-                          color: Color(0xFF23636C), width: 1),
+                        color: Color(0xFF23636C),
+                        width: 1,
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                       borderSide: const BorderSide(
-                          color: Color(0xFF23636C), width: 1),
+                        color: Color(0xFF23636C),
+                        width: 1,
+                      ),
                     ),
                     filled: true,
                     fillColor: const Color(0xFF00252D),
@@ -142,15 +184,15 @@ class _AddScreenState extends State<AddScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
                         ),
-                        side: const BorderSide(color: Color(0xFF23636C), width: 1),
+                        side: const BorderSide(
+                          color: Color(0xFF23636C),
+                          width: 1,
+                        ),
                       ),
                       onPressed: _addNote,
                       child: const Text(
                         'Adicionar',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 14),
                       ),
                     ),
                   ),
@@ -162,27 +204,4 @@ class _AddScreenState extends State<AddScreen> {
       ),
     );
   }
-}
-
-void showErrorNotification(BuildContext context, String message) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Row(
-        children: [
-          const Icon(Icons.error, color: Colors.white),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(message, style: const TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-      backgroundColor: Colors.redAccent,
-      behavior: SnackBarBehavior.floating,
-      margin: const EdgeInsets.all(16),
-      duration: const Duration(seconds: 3),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-    ),
-  );
 }
