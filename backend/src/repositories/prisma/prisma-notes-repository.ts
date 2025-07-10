@@ -31,6 +31,9 @@ export class PrismaNotesRepository implements NotesRepository {
       const notes = await prisma.note.findMany({
         where: {
             userId
+        },
+        orderBy: {
+          updatedAt: 'desc',
         }
       })
       return notes
