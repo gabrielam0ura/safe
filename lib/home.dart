@@ -223,6 +223,8 @@ class _HomeState extends State<Home> {
                                       context,
                                       '/edit',
                                       arguments: {
+                                        'id':
+                                            notes[index]['id']!, // Adicione o id aqui
                                         'initialTitle': notes[index]['title']!,
                                         'initialNote': notes[index]['note']!,
                                       },
@@ -230,6 +232,8 @@ class _HomeState extends State<Home> {
                                     if (result != null &&
                                         result is Map<String, String>) {
                                       editNoteLocally(index, {
+                                        'id':
+                                            notes[index]['id']!, // Mantenha o id ao editar localmente
                                         'title': result['title']!,
                                         'note': result['note']!,
                                       });

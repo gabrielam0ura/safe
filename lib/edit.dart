@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'styles.dart';
 import 'widgets/safe_logo.dart';
+import 'dart:convert'; // Added for jsonEncode
+import 'package:http/http.dart' as http; // Added for http
+import 'utils/notifier.dart';
 
 class EditScreen extends StatefulWidget {
+  final String id;
   final String initialTitle;
   final String initialNote;
 
   const EditScreen({
     super.key,
+    required this.id,
     required this.initialTitle,
     required this.initialNote,
   });
@@ -74,18 +79,31 @@ class _EditScreenState extends State<EditScreen> {
                 width: screenWidth * 0.87,
                 child: TextField(
                   controller: _titleController,
-                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                   decoration: const InputDecoration(
                     hintText: 'Título',
                     hintStyle: TextStyle(color: Colors.white54),
                     border: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF23636C), width: 1),
+                      borderSide: BorderSide(
+                        color: Color(0xFF23636C),
+                        width: 1,
+                      ),
                     ),
                     enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF23636C), width: 1),
+                      borderSide: BorderSide(
+                        color: Color(0xFF23636C),
+                        width: 1,
+                      ),
                     ),
                     focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF23636C), width: 1),
+                      borderSide: BorderSide(
+                        color: Color(0xFF23636C),
+                        width: 1,
+                      ),
                     ),
                     filled: true,
                     fillColor: Color(0xFF00252D),
@@ -108,15 +126,24 @@ class _EditScreenState extends State<EditScreen> {
                     hintStyle: const TextStyle(color: Colors.white54),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide: const BorderSide(color: Color(0xFF23636C), width: 1),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF23636C),
+                        width: 1,
+                      ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide: const BorderSide(color: Color(0xFF23636C), width: 1),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF23636C),
+                        width: 1,
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide: const BorderSide(color: Color(0xFF23636C), width: 1),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF23636C),
+                        width: 1,
+                      ),
                     ),
                     filled: true,
                     fillColor: const Color(0xFF00252D),
@@ -137,20 +164,52 @@ class _EditScreenState extends State<EditScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
                         ),
-                        side: const BorderSide(color: Color(0xFF23636C), width: 1),
+                        side: const BorderSide(
+                          color: Color(0xFF23636C),
+                          width: 1,
+                        ),
                       ),
-                      onPressed: () {
-                        Navigator.pop(context, {
-                          'title': _titleController.text,
-                          'note': _noteController.text,
-                        });
+                      onPressed: () async {
+                        final updatedTitle = _titleController.text.trim();
+                        final updatedNote = _noteController.text.trim();
+
+                        if (updatedTitle.isEmpty || updatedNote.isEmpty) {
+                          showErrorNotification(
+                            context,
+                            'Título e anotação não podem ser vazios',
+                          );
+                          return;
+                        }
+
+                        final response = await http.put(
+                          Uri.parse('http://localhost:3333/notes/${widget.id}'),
+                          headers: {'Content-Type': 'application/json'},
+                          body: jsonEncode({
+                            'title': updatedTitle,
+                            'content': updatedNote,
+                          }),
+                        );
+
+                        if (response.statusCode == 200 ||
+                            response.statusCode == 201) {
+                          showSuccessNotification(
+                            context,
+                            'Anotação editada com sucesso',
+                          );
+                          Navigator.pop(context, {
+                            'title': updatedTitle,
+                            'note': updatedNote,
+                          });
+                        } else {
+                          showErrorNotification(
+                            context,
+                            'Erro ao editar anotação.',
+                          );
+                        }
                       },
                       child: const Text(
                         'Salvar',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 14),
                       ),
                     ),
                   ),

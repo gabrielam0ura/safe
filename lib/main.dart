@@ -27,6 +27,7 @@ class MyApp extends StatelessWidget {
           final args = settings.arguments as Map<String, String>;
           return MaterialPageRoute(
             builder: (_) => edit.EditScreen(
+              id: args['id'] ?? '',
               initialTitle: args['initialTitle'] ?? '',
               initialNote: args['initialNote'] ?? '',
             ),
