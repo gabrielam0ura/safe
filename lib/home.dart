@@ -84,6 +84,7 @@ class _HomeState extends State<Home> {
       notes.add(newNote);
     });
     saveNotes();
+    fetchNotes();
   }
 
   void editNoteLocally(int index, Map<String, String> updatedNote) {
@@ -91,6 +92,7 @@ class _HomeState extends State<Home> {
       notes[index] = updatedNote;
     });
     saveNotes();
+    fetchNotes();
   }
 
   void deleteNoteLocally(int index) async {
@@ -105,6 +107,7 @@ class _HomeState extends State<Home> {
         setState(() => notes.removeAt(index));
         saveNotes();
         showSuccessNotification(context, 'Anotação deletada com sucesso');
+        fetchNotes();
       } else {
         showErrorNotification(context, 'Erro ao deletar anotação');
       }
