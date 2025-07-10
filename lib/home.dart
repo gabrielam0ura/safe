@@ -3,9 +3,115 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'login.dart';
 import 'styles.dart';
 import 'widgets/safe_logo.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import 'utils/notifier.dart';
 
-class Home extends StatelessWidget {
+class Home extends StatefulWidget {
   const Home({super.key});
+
+  @override
+  State<Home> createState() => _HomeState();
+}
+
+class _HomeState extends State<Home> {
+  List<Map<String, String>> notes = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadNotes();
+    fetchNotes();
+  }
+
+  void loadNotes() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? jsonNotes = prefs.getString('notes');
+    if (jsonNotes != null) {
+      final List decoded = jsonDecode(jsonNotes);
+      setState(() {
+        notes = decoded
+            .map<Map<String, String>>((e) => Map<String, String>.from(e))
+            .toList();
+        isLoading = false;
+      });
+    } else {
+      setState(() => isLoading = false);
+    }
+  }
+
+  void saveNotes() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('notes', jsonEncode(notes));
+  }
+
+  void fetchNotes() async {
+    try {
+      final response = await http.get(Uri.parse('http://localhost:3333/notes'));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> json = jsonDecode(response.body);
+        final List data = json['notes'] ?? [];
+
+        if (data.isNotEmpty) {
+          setState(() {
+            notes = data
+                .map<Map<String, String>>(
+                  (note) => {
+                    'id': note['id'] ?? '',
+                    'title': note['title'] ?? '',
+                    'note': note['content'] ?? '',
+                  },
+                )
+                .toList();
+            isLoading = false;
+          });
+          saveNotes();
+        } else {
+          setState(() => isLoading = false);
+        }
+      } else {
+        setState(() => isLoading = false);
+      }
+    } catch (_) {
+      setState(() => isLoading = false);
+    }
+  }
+
+  void addNoteLocally(Map<String, String> newNote) {
+    setState(() {
+      notes.add(newNote);
+    });
+    saveNotes();
+  }
+
+  void editNoteLocally(int index, Map<String, String> updatedNote) {
+    setState(() {
+      notes[index] = updatedNote;
+    });
+    saveNotes();
+  }
+
+  void deleteNoteLocally(int index) async {
+    final note = notes[index];
+
+    try {
+      final response = await http.delete(
+        Uri.parse('http://localhost:3333/notes/${note["id"]}'),
+      );
+
+      if (response.statusCode == 204) {
+        setState(() => notes.removeAt(index));
+        saveNotes();
+        showSuccessNotification(context, 'Anotação deletada com sucesso');
+      } else {
+        showErrorNotification(context, 'Erro ao deletar anotação');
+      }
+    } catch (_) {
+      showErrorNotification(context, 'Falha na conexão com o servidor');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +126,7 @@ class Home extends StatelessWidget {
               decoration: const BoxDecoration(
                 color: backgroundColor,
                 border: Border(
-                  bottom: BorderSide(color: Color(0xFF23636C), width: 1.5),
+                  bottom: BorderSide(color: Color(0xFF23636C), width: 1),
                 ),
               ),
               padding: const EdgeInsets.only(left: 21, top: 40, right: 12),
@@ -41,7 +147,6 @@ class Home extends StatelessWidget {
               ),
             ),
           ),
-
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(12),
@@ -56,7 +161,10 @@ class Home extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
                           color: backgroundColor,
-                          border: Border.all(color: const Color(0xFF23636C), width: 1.5),
+                          border: Border.all(
+                            color: const Color(0xFF23636C),
+                            width: 1,
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const TextField(
@@ -72,22 +180,65 @@ class Home extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       InkWell(
-                        onTap: () {},
-                        child: SvgPicture.asset('assets/add.svg', width: 41, height: 41),
+                        onTap: () async {
+                          final result = await Navigator.pushNamed(
+                            context,
+                            '/add',
+                          );
+                          if (result != null && result is Map<String, String>) {
+                            addNoteLocally({
+                              'id': result['id']!,
+                              'title': result['title']!,
+                              'note': result['note']!,
+                            });
+                          }
+                        },
+                        child: SvgPicture.asset(
+                          'assets/add.svg',
+                          width: 41,
+                          height: 41,
+                        ),
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 12),
-
                   Expanded(
-                    child: ListView(
-                      children: const [
-                        Align(alignment: Alignment.center, child: NoteCard()),
-                        Align(alignment: Alignment.center, child: NoteCard()),
-                        Align(alignment: Alignment.center, child: NoteCard()),
-                      ],
-                    ),
+                    child: isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: notes.length,
+                            itemBuilder: (context, index) {
+                              return Align(
+                                alignment: Alignment.center,
+                                child: NoteCard(
+                                  title: notes[index]['title']!,
+                                  note: notes[index]['note']!,
+                                  onDelete: () => deleteNoteLocally(index),
+                                  onEdit: () async {
+                                    final result = await Navigator.pushNamed(
+                                      context,
+                                      '/edit',
+                                      arguments: {
+                                        'initialTitle': notes[index]['title']!,
+                                        'initialNote': notes[index]['note']!,
+                                      },
+                                    );
+                                    if (result != null &&
+                                        result is Map<String, String>) {
+                                      editNoteLocally(index, {
+                                        'title': result['title']!,
+                                        'note': result['note']!,
+                                      });
+                                    }
+                                  },
+                                ),
+                              );
+                            },
+                          ),
                   ),
                 ],
               ),
@@ -100,65 +251,76 @@ class Home extends StatelessWidget {
 }
 
 class NoteCard extends StatelessWidget {
-  final String text;
+  final String title;
+  final String note;
+  final VoidCallback? onDelete;
+  final VoidCallback? onEdit;
 
   const NoteCard({
     super.key,
-    this.text = 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. '
-        'Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, '
-        'when an unknown printer took a galley of type and scrambled it to make a type specimen book. '
-        'It has survived not only five centuries, but also the leap into electronic typesetting, '
-        'remaining essentially unchanged.',
+    required this.title,
+    required this.note,
+    this.onDelete,
+    this.onEdit,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.87,
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          border: Border.all(color: const Color(0xFF23636C), width: 1.5),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Note',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+    return Container(
+      width: MediaQuery.of(context).size.width * 0.87,
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        border: Border.all(color: const Color(0xFF23636C), width: 1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: onEdit,
+                    child: SvgPicture.asset(
+                      'assets/edit.svg',
+                      width: 20,
+                      height: 20,
+                    ),
                   ),
-                ),
-                Row(
-                  children: [
-                    SvgPicture.asset('assets/edit.svg', width: 20, height: 20),
-                    const SizedBox(width: 12),
-                    SvgPicture.asset('assets/delete.svg', width: 20, height: 20),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Container(
-              height: 1.5,
-              width: double.infinity,
-              color: const Color(0xFF23636C),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              text,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
-            ),
-          ],
-        ),
+                  const SizedBox(width: 12),
+                  GestureDetector(
+                    onTap: onDelete,
+                    child: SvgPicture.asset(
+                      'assets/delete.svg',
+                      width: 20,
+                      height: 20,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            height: 1.5,
+            width: double.infinity,
+            color: const Color(0xFF23636C),
+          ),
+          const SizedBox(height: 8),
+          Text(note, style: const TextStyle(color: Colors.white, fontSize: 16)),
+        ],
       ),
     );
   }
