@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'home.dart';
 import 'styles.dart';
 import 'widgets/safe_logo.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'utils/notifier.dart';
 import 'dart:convert';
 

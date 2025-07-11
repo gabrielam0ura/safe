@@ -9,7 +9,7 @@ export async function update(request: FastifyRequest, reply: FastifyReply) {
 
   const updateNoteBodySchema = z.object({
     title: z.string().min(3, "O titulo deve ter no minimo 3 caracteres").max(30, "O titulo deve ter no maximo 30 caracteres").optional(),
-    content: z.string().min(25, "O conteúdo deve ter no minimo 25 caracteres").max(300, "O conteúdo deve ter no maximo 300 caracteres").optional(),
+    content: z.string().min(10, "O conteúdo deve ter no minimo 10 caracteres").max(300, "O conteúdo deve ter no maximo 300 caracteres").optional(),
   })
 
   const { noteId } = updateNoteParamsSchema.parse(request.params)

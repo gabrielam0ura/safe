@@ -84,6 +84,7 @@ class _HomeState extends State<Home> {
       notes.add(newNote);
     });
     saveNotes();
+    fetchNotes();
   }
 
   void editNoteLocally(int index, Map<String, String> updatedNote) {
@@ -91,6 +92,7 @@ class _HomeState extends State<Home> {
       notes[index] = updatedNote;
     });
     saveNotes();
+    fetchNotes();
   }
 
   void deleteNoteLocally(int index) async {
@@ -105,6 +107,7 @@ class _HomeState extends State<Home> {
         setState(() => notes.removeAt(index));
         saveNotes();
         showSuccessNotification(context, 'Anotação deletada com sucesso');
+        fetchNotes();
       } else {
         showErrorNotification(context, 'Erro ao deletar anotação');
       }
@@ -174,7 +177,7 @@ class _HomeState extends State<Home> {
                             hintStyle: TextStyle(color: Color(0xFF2E808C)),
                             border: InputBorder.none,
                             isCollapsed: true,
-                            contentPadding: EdgeInsets.symmetric(vertical: 10),
+                            contentPadding: EdgeInsets.symmetric(vertical: 12),
                           ),
                         ),
                       ),
@@ -223,6 +226,8 @@ class _HomeState extends State<Home> {
                                       context,
                                       '/edit',
                                       arguments: {
+                                        'id':
+                                            notes[index]['id']!, // Adicione o id aqui
                                         'initialTitle': notes[index]['title']!,
                                         'initialNote': notes[index]['note']!,
                                       },
@@ -230,6 +235,8 @@ class _HomeState extends State<Home> {
                                     if (result != null &&
                                         result is Map<String, String>) {
                                       editNoteLocally(index, {
+                                        'id':
+                                            notes[index]['id']!, // Mantenha o id ao editar localmente
                                         'title': result['title']!,
                                         'note': result['note']!,
                                       });
