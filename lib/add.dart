@@ -42,18 +42,21 @@ class _AddScreenState extends State<AddScreen> {
       );
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
-        showSuccessNotification(context, 'Anotação salva com sucesso');
-        Navigator.pop(context, {
-          'id': data['id'] ?? '',
-          'title': title,
-          'note': note,
-        });
+        if (mounted) {
+          showSuccessNotification(context, 'Anotação salva com sucesso');
+        }
+        if (mounted) {
+          Navigator.pop(context, {'success': true});
+        }
       } else {
-        showErrorNotification(context, 'Erro ao adicionar anotação.');
+        if (mounted) {
+          showErrorNotification(context, 'Erro ao adicionar anotação.');
+        }
       }
-    } catch (_) {
-      showErrorNotification(context, 'Falha na conexão com o servidor.');
+    } catch (e) {
+      if (mounted) {
+        showErrorNotification(context, 'Falha na conexão com o servidor.');
+      }
     }
   }
 

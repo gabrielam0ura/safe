@@ -4,7 +4,6 @@ import 'login.dart';
 import 'styles.dart';
 import 'widgets/safe_logo.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'utils/notifier.dart';
 
@@ -22,39 +21,18 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
-    loadNotes();
     fetchNotes();
-  }
-
-  void loadNotes() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? jsonNotes = prefs.getString('notes');
-    if (jsonNotes != null) {
-      final List decoded = jsonDecode(jsonNotes);
-      setState(() {
-        notes = decoded
-            .map<Map<String, String>>((e) => Map<String, String>.from(e))
-            .toList();
-        isLoading = false;
-      });
-    } else {
-      setState(() => isLoading = false);
-    }
-  }
-
-  void saveNotes() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('notes', jsonEncode(notes));
   }
 
   void fetchNotes() async {
     try {
       final response = await http.get(Uri.parse('http://localhost:3333/notes'));
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> json = jsonDecode(response.body);
         final List data = json['notes'] ?? [];
 
-        if (data.isNotEmpty) {
+        if (mounted) {
           setState(() {
             notes = data
                 .map<Map<String, String>>(
@@ -67,31 +45,27 @@ class _HomeState extends State<Home> {
                 .toList();
             isLoading = false;
           });
-          saveNotes();
-        } else {
-          setState(() => isLoading = false);
         }
       } else {
+        if (mounted) {
+          setState(() => isLoading = false);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         setState(() => isLoading = false);
       }
-    } catch (_) {
-      setState(() => isLoading = false);
     }
   }
 
-  void addNoteLocally(Map<String, String> newNote) {
+  void onNoteCreated() {
     setState(() {
-      notes.add(newNote);
+      isLoading = true;
     });
-    saveNotes();
     fetchNotes();
   }
 
   void editNoteLocally(int index, Map<String, String> updatedNote) {
-    setState(() {
-      notes[index] = updatedNote;
-    });
-    saveNotes();
     fetchNotes();
   }
 
@@ -104,15 +78,19 @@ class _HomeState extends State<Home> {
       );
 
       if (response.statusCode == 204) {
-        setState(() => notes.removeAt(index));
-        saveNotes();
-        showSuccessNotification(context, 'Anotação deletada com sucesso');
+        if (mounted) {
+          showSuccessNotification(context, 'Anotação deletada com sucesso');
+        }
         fetchNotes();
       } else {
-        showErrorNotification(context, 'Erro ao deletar anotação');
+        if (mounted) {
+          showErrorNotification(context, 'Erro ao deletar anotação');
+        }
       }
     } catch (_) {
-      showErrorNotification(context, 'Falha na conexão com o servidor');
+      if (mounted) {
+        showErrorNotification(context, 'Falha na conexão com o servidor');
+      }
     }
   }
 
@@ -189,12 +167,10 @@ class _HomeState extends State<Home> {
                             context,
                             '/add',
                           );
-                          if (result != null && result is Map<String, String>) {
-                            addNoteLocally({
-                              'id': result['id']!,
-                              'title': result['title']!,
-                              'note': result['note']!,
-                            });
+                          if (result != null &&
+                              result is Map<String, dynamic> &&
+                              result['success'] == true) {
+                            onNoteCreated();
                           }
                         },
                         child: SvgPicture.asset(
