@@ -172,6 +172,7 @@ class _HomeState extends State<Home> {
                         ),
                         child: const TextField(
                           style: TextStyle(color: Color(0xFF2E808C)),
+                          textAlignVertical: TextAlignVertical.center,
                           decoration: InputDecoration(
                             hintText: 'Pesquise...',
                             hintStyle: TextStyle(color: Color(0xFF2E808C)),
