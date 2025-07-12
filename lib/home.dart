@@ -9,6 +9,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'utils/notifier.dart';
 import 'utils/theme-provider.dart';
+import 'add.dart';
+import 'edit.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -35,15 +37,12 @@ class _HomeState extends State<Home> {
         final List data = json['notes'] ?? [];
         if (mounted) {
           setState(() {
-            notes = data
-                .map<Map<String, String>>(
-                  (note) => {
-                    'id': note['id'] ?? '',
-                    'title': note['title'] ?? '',
-                    'note': note['content'] ?? '',
-                  },
-                )
-                .toList();
+            notes = data.map<Map<String, String>>((note) => {
+              'id': note['id'] ?? '',
+              'title': note['title'] ?? '',
+              'note': note['content'] ?? '',
+              'createdAt': note['createdAt'] ?? '',
+            }).toList();
             isLoading = false;
           });
         }
@@ -117,10 +116,12 @@ class _HomeState extends State<Home> {
                       IconButton(
                         icon: Icon(EvaIcons.logOut, color: textColor),
                         onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (_) => const Login()),
-                          );
+                          Navigator.of(context).pushReplacement(PageRouteBuilder(
+                            pageBuilder: (_, __, ___) => const Login(),
+                            transitionsBuilder: (_, animation, __, child) {
+                              return FadeTransition(opacity: animation, child: child);
+                            },
+                          ));
                         },
                       ),
                     ],
@@ -146,22 +147,46 @@ class _HomeState extends State<Home> {
                           border: Border.all(color: borderColor, width: 1),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: TextField(
-                          style: TextStyle(color: textColor),
-                          textAlignVertical: TextAlignVertical.center,
-                          decoration: InputDecoration(
-                            hintText: 'Pesquise...',
-                            hintStyle: TextStyle(color: textColor.withOpacity(0.6)),
-                            border: InputBorder.none,
-                            isCollapsed: true,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                style: TextStyle(color: textColor),
+                                textAlignVertical: TextAlignVertical.center,
+                                decoration: InputDecoration(
+                                  hintText: 'Pesquise...',
+                                  hintStyle: TextStyle(color: textColor.withOpacity(0.6)),
+                                  border: InputBorder.none,
+                                  isCollapsed: true,
+                                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ),
+                            SvgPicture.asset(
+                              'assets/calendar.svg',
+                              width: 20,
+                              height: 20,
+                              color: textColor,
+                            ),
+                            const SizedBox(width: 8),
+                            SvgPicture.asset(
+                              'assets/search.svg',
+                              width: 20,
+                              height: 20,
+                              color: textColor,
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 8),
                       InkWell(
                         onTap: () async {
-                          final result = await Navigator.pushNamed(context, '/add');
+                          final result = await Navigator.of(context).push(PageRouteBuilder(
+                            pageBuilder: (_, __, ___) => const AddScreen(),
+                            transitionsBuilder: (_, animation, __, child) {
+                              return FadeTransition(opacity: animation, child: child);
+                            },
+                          ));
                           if (result != null &&
                               result is Map<String, dynamic> &&
                               result['success'] == true) {
@@ -189,17 +214,19 @@ class _HomeState extends State<Home> {
                                 child: NoteCard(
                                   title: notes[index]['title']!,
                                   note: notes[index]['note']!,
+                                  createdAt: notes[index]['createdAt']!,
                                   onDelete: () => deleteNoteLocally(index),
                                   onEdit: () async {
-                                    final result = await Navigator.pushNamed(
-                                      context,
-                                      '/edit',
-                                      arguments: {
-                                        'id': notes[index]['id']!,
-                                        'initialTitle': notes[index]['title']!,
-                                        'initialNote': notes[index]['note']!,
+                                    final result = await Navigator.of(context).push(PageRouteBuilder(
+                                      pageBuilder: (_, __, ___) => EditScreen(
+                                        id: notes[index]['id']!,
+                                        initialTitle: notes[index]['title']!,
+                                        initialNote: notes[index]['note']!,
+                                      ),
+                                      transitionsBuilder: (_, animation, __, child) {
+                                        return FadeTransition(opacity: animation, child: child);
                                       },
-                                    );
+                                    ));
                                     if (result != null && result is Map<String, String>) {
                                       editNoteLocally(index, {
                                         'id': notes[index]['id']!,
@@ -229,6 +256,7 @@ class _HomeState extends State<Home> {
 class NoteCard extends StatelessWidget {
   final String title;
   final String note;
+  final String createdAt;
   final VoidCallback? onDelete;
   final VoidCallback? onEdit;
   final Color textColor;
@@ -239,6 +267,7 @@ class NoteCard extends StatelessWidget {
     super.key,
     required this.title,
     required this.note,
+    required this.createdAt,
     this.onDelete,
     this.onEdit,
     required this.textColor,
@@ -261,16 +290,24 @@ class NoteCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: textColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              Text(
+                createdAt.split('T').first,
+                style: TextStyle(color: textColor.withOpacity(0.7), fontSize: 12),
+              ),
+              const SizedBox(width: 8),
               Row(
                 children: [
                   GestureDetector(

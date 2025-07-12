@@ -33,3 +33,5 @@ flutter:
     - assets/add.svg
     - assets/delete.svg
     - assets/edit.svg
+    - assets/search.svg
+    - assets/calendar.svg

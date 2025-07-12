@@ -22,14 +22,16 @@ class _LoginState extends State<Login> {
   bool _passwordError = false;
   String? _errorMessage;
 
-  InputDecoration _inputDecoration(String hint, bool isError, Color borderColor) {
+  InputDecoration _inputDecoration(
+    String hint,
+    bool isError,
+    Color borderColor,
+  ) {
     return inputDecoration.copyWith(
       hintText: hint,
       enabledBorder: OutlineInputBorder(
         borderRadius: const BorderRadius.all(Radius.circular(15)),
-        borderSide: BorderSide(
-          color: isError ? Colors.redAccent : borderColor,
-        ),
+        borderSide: BorderSide(color: isError ? Colors.redAccent : borderColor),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: const BorderRadius.all(Radius.circular(15)),
@@ -54,7 +56,12 @@ class _LoginState extends State<Login> {
         _passwordController.text == correctPassword) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const Home()),
+        PageRouteBuilder(
+          pageBuilder: (_, __, ___) => const Home(),
+          transitionsBuilder: (_, animation, __, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
       );
     } else {
       showErrorNotification(context, 'Usuário ou senha incorretos.');
@@ -74,12 +81,16 @@ class _LoginState extends State<Login> {
 
     final bool isDarkMode = themeProvider.isDarkMode;
 
-    final backgroundColorState =
-        isDarkMode ? backgroundColor : const Color(0xFF2E808C);
-    final inputBorderColorState =
-        isDarkMode ? inputBorderColor : const Color(0xFF00252D);
+    final backgroundColorState = isDarkMode
+        ? backgroundColor
+        : const Color(0xFF2E808C);
+    final inputBorderColorState = isDarkMode
+        ? inputBorderColor
+        : const Color(0xFF00252D);
     final buttonColorState = isDarkMode ? buttonColor : const Color(0xFF00252D);
-    final logoAsset = isDarkMode ? 'assets/safe-dark.svg' : 'assets/safe-light.svg';
+    final logoAsset = isDarkMode
+        ? 'assets/safe-dark.svg'
+        : 'assets/safe-light.svg';
     final textColor = isDarkMode ? Colors.white : Colors.black;
 
     return Scaffold(
@@ -110,8 +121,11 @@ class _LoginState extends State<Login> {
                         child: TextFormField(
                           controller: _usernameController,
                           style: TextStyle(color: textColor),
-                          decoration:
-                              _inputDecoration('Usuário', _userError, inputBorderColorState),
+                          decoration: _inputDecoration(
+                            'Usuário',
+                            _userError,
+                            inputBorderColorState,
+                          ),
                           onChanged: (_) {
                             if (_userError) setState(() => _userError = false);
                           },
@@ -124,10 +138,14 @@ class _LoginState extends State<Login> {
                           controller: _passwordController,
                           obscureText: true,
                           style: TextStyle(color: textColor),
-                          decoration:
-                              _inputDecoration('Senha', _passwordError, inputBorderColorState),
+                          decoration: _inputDecoration(
+                            'Senha',
+                            _passwordError,
+                            inputBorderColorState,
+                          ),
                           onChanged: (_) {
-                            if (_passwordError) setState(() => _passwordError = false);
+                            if (_passwordError)
+                              setState(() => _passwordError = false);
                           },
                         ),
                       ),
