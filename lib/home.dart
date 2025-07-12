@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 import 'login.dart';
 import 'styles.dart';
 import 'widgets/safe_logo.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'utils/notifier.dart';
+import 'utils/theme-provider.dart';
+import 'add.dart';
+import 'edit.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -27,41 +32,30 @@ class _HomeState extends State<Home> {
   void fetchNotes() async {
     try {
       final response = await http.get(Uri.parse('http://localhost:3333/notes'));
-
       if (response.statusCode == 200) {
         final Map<String, dynamic> json = jsonDecode(response.body);
         final List data = json['notes'] ?? [];
-
         if (mounted) {
           setState(() {
-            notes = data
-                .map<Map<String, String>>(
-                  (note) => {
-                    'id': note['id'] ?? '',
-                    'title': note['title'] ?? '',
-                    'note': note['content'] ?? '',
-                  },
-                )
-                .toList();
+            notes = data.map<Map<String, String>>((note) => {
+              'id': note['id'] ?? '',
+              'title': note['title'] ?? '',
+              'note': note['content'] ?? '',
+              'createdAt': note['createdAt'] ?? '',
+            }).toList();
             isLoading = false;
           });
         }
       } else {
-        if (mounted) {
-          setState(() => isLoading = false);
-        }
+        if (mounted) setState(() => isLoading = false);
       }
-    } catch (e) {
-      if (mounted) {
-        setState(() => isLoading = false);
-      }
+    } catch (_) {
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
   void onNoteCreated() {
-    setState(() {
-      isLoading = true;
-    });
+    setState(() => isLoading = true);
     fetchNotes();
   }
 
@@ -71,58 +65,66 @@ class _HomeState extends State<Home> {
 
   void deleteNoteLocally(int index) async {
     final note = notes[index];
-
     try {
       final response = await http.delete(
         Uri.parse('http://localhost:3333/notes/${note["id"]}'),
       );
-
       if (response.statusCode == 204) {
-        if (mounted) {
-          showSuccessNotification(context, 'Anotação deletada com sucesso');
-        }
+        if (mounted) showSuccessNotification(context, 'Anotação deletada com sucesso');
         fetchNotes();
       } else {
-        if (mounted) {
-          showErrorNotification(context, 'Erro ao deletar anotação');
-        }
+        if (mounted) showErrorNotification(context, 'Erro ao deletar anotação');
       }
     } catch (_) {
-      if (mounted) {
-        showErrorNotification(context, 'Falha na conexão com o servidor');
-      }
+      if (mounted) showErrorNotification(context, 'Falha na conexão com o servidor');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    Color backgroundColorState = isDarkMode ? backgroundColor : const Color(0xFF2E808C);
+    Color textColor = isDarkMode ? Colors.white : Colors.black;
+    Color borderColor = isDarkMode ? const Color(0xFF23636C) : Colors.black;
+    String logoAsset = isDarkMode ? 'assets/safe-dark.svg' : 'assets/safe-light.svg';
+
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: backgroundColorState,
       body: Column(
         children: [
           PreferredSize(
             preferredSize: const Size.fromHeight(121),
             child: Container(
               height: 121,
-              decoration: const BoxDecoration(
-                color: backgroundColor,
-                border: Border(
-                  bottom: BorderSide(color: Color(0xFF23636C), width: 1),
-                ),
+              decoration: BoxDecoration(
+                color: backgroundColorState,
+                border: Border(bottom: BorderSide(color: borderColor, width: 1)),
               ),
               padding: const EdgeInsets.only(left: 21, top: 40, right: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const SafeLogo(),
-                  IconButton(
-                    icon: const Icon(Icons.logout, color: Colors.white),
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => const Login()),
-                      );
-                    },
+                  SafeLogo(asset: logoAsset),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.brightness_6, color: textColor),
+                        onPressed: themeProvider.toggleTheme,
+                      ),
+                      IconButton(
+                        icon: Icon(EvaIcons.logOut, color: textColor),
+                        onPressed: () {
+                          Navigator.of(context).pushReplacement(PageRouteBuilder(
+                            pageBuilder: (_, __, ___) => const Login(),
+                            transitionsBuilder: (_, animation, __, child) {
+                              return FadeTransition(opacity: animation, child: child);
+                            },
+                          ));
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -141,32 +143,50 @@ class _HomeState extends State<Home> {
                         height: 42,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
-                          color: backgroundColor,
-                          border: Border.all(
-                            color: const Color(0xFF23636C),
-                            width: 1,
-                          ),
+                          color: backgroundColorState,
+                          border: Border.all(color: borderColor, width: 1),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const TextField(
-                          style: TextStyle(color: Color(0xFF2E808C)),
-                          textAlignVertical: TextAlignVertical.center,
-                          decoration: InputDecoration(
-                            hintText: 'Pesquise...',
-                            hintStyle: TextStyle(color: Color(0xFF2E808C)),
-                            border: InputBorder.none,
-                            isCollapsed: true,
-                            contentPadding: EdgeInsets.symmetric(vertical: 12),
-                          ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                style: TextStyle(color: textColor),
+                                textAlignVertical: TextAlignVertical.center,
+                                decoration: InputDecoration(
+                                  hintText: 'Pesquise...',
+                                  hintStyle: TextStyle(color: textColor.withOpacity(0.6)),
+                                  border: InputBorder.none,
+                                  isCollapsed: true,
+                                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ),
+                            SvgPicture.asset(
+                              'assets/calendar.svg',
+                              width: 20,
+                              height: 20,
+                              color: textColor,
+                            ),
+                            const SizedBox(width: 8),
+                            SvgPicture.asset(
+                              'assets/search.svg',
+                              width: 20,
+                              height: 20,
+                              color: textColor,
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 8),
                       InkWell(
                         onTap: () async {
-                          final result = await Navigator.pushNamed(
-                            context,
-                            '/add',
-                          );
+                          final result = await Navigator.of(context).push(PageRouteBuilder(
+                            pageBuilder: (_, __, ___) => const AddScreen(),
+                            transitionsBuilder: (_, animation, __, child) {
+                              return FadeTransition(opacity: animation, child: child);
+                            },
+                          ));
                           if (result != null &&
                               result is Map<String, dynamic> &&
                               result['success'] == true) {
@@ -177,6 +197,7 @@ class _HomeState extends State<Home> {
                           'assets/add.svg',
                           width: 41,
                           height: 41,
+                          color: textColor,
                         ),
                       ),
                     ],
@@ -184,11 +205,7 @@ class _HomeState extends State<Home> {
                   const SizedBox(height: 12),
                   Expanded(
                     child: isLoading
-                        ? const Center(
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                            ),
-                          )
+                        ? const Center(child: CircularProgressIndicator(color: Colors.white))
                         : ListView.builder(
                             itemCount: notes.length,
                             itemBuilder: (context, index) {
@@ -197,28 +214,30 @@ class _HomeState extends State<Home> {
                                 child: NoteCard(
                                   title: notes[index]['title']!,
                                   note: notes[index]['note']!,
+                                  createdAt: notes[index]['createdAt']!,
                                   onDelete: () => deleteNoteLocally(index),
                                   onEdit: () async {
-                                    final result = await Navigator.pushNamed(
-                                      context,
-                                      '/edit',
-                                      arguments: {
-                                        'id':
-                                            notes[index]['id']!, // Adicione o id aqui
-                                        'initialTitle': notes[index]['title']!,
-                                        'initialNote': notes[index]['note']!,
+                                    final result = await Navigator.of(context).push(PageRouteBuilder(
+                                      pageBuilder: (_, __, ___) => EditScreen(
+                                        id: notes[index]['id']!,
+                                        initialTitle: notes[index]['title']!,
+                                        initialNote: notes[index]['note']!,
+                                      ),
+                                      transitionsBuilder: (_, animation, __, child) {
+                                        return FadeTransition(opacity: animation, child: child);
                                       },
-                                    );
-                                    if (result != null &&
-                                        result is Map<String, String>) {
+                                    ));
+                                    if (result != null && result is Map<String, String>) {
                                       editNoteLocally(index, {
-                                        'id':
-                                            notes[index]['id']!, // Mantenha o id ao editar localmente
+                                        'id': notes[index]['id']!,
                                         'title': result['title']!,
                                         'note': result['note']!,
                                       });
                                     }
                                   },
+                                  textColor: textColor,
+                                  borderColor: borderColor,
+                                  backgroundColor: backgroundColorState,
                                 ),
                               );
                             },
@@ -237,15 +256,23 @@ class _HomeState extends State<Home> {
 class NoteCard extends StatelessWidget {
   final String title;
   final String note;
+  final String createdAt;
   final VoidCallback? onDelete;
   final VoidCallback? onEdit;
+  final Color textColor;
+  final Color borderColor;
+  final Color backgroundColor;
 
   const NoteCard({
     super.key,
     required this.title,
     required this.note,
+    required this.createdAt,
     this.onDelete,
     this.onEdit,
+    required this.textColor,
+    required this.borderColor,
+    required this.backgroundColor,
   });
 
   @override
@@ -256,23 +283,31 @@ class NoteCard extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: backgroundColor,
-        border: Border.all(color: const Color(0xFF23636C), width: 1),
+        border: Border.all(color: borderColor, width: 1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              Text(
+                createdAt.split('T').first,
+                style: TextStyle(color: textColor.withOpacity(0.7), fontSize: 12),
+              ),
+              const SizedBox(width: 8),
               Row(
                 children: [
                   GestureDetector(
@@ -281,6 +316,7 @@ class NoteCard extends StatelessWidget {
                       'assets/edit.svg',
                       width: 20,
                       height: 20,
+                      color: textColor,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -290,6 +326,7 @@ class NoteCard extends StatelessWidget {
                       'assets/delete.svg',
                       width: 20,
                       height: 20,
+                      color: textColor,
                     ),
                   ),
                 ],
@@ -297,13 +334,9 @@ class NoteCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Container(
-            height: 1.5,
-            width: double.infinity,
-            color: const Color(0xFF23636C),
-          ),
+          Container(height: 1.5, width: double.infinity, color: borderColor),
           const SizedBox(height: 8),
-          Text(note, style: const TextStyle(color: Colors.white, fontSize: 16)),
+          Text(note, style: TextStyle(color: textColor, fontSize: 16)),
         ],
       ),
     );

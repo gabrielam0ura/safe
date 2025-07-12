@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'styles.dart';
 import 'widgets/safe_logo.dart';
-import 'dart:convert'; // Added for jsonEncode
-import 'package:http/http.dart' as http; // Added for http
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'utils/notifier.dart';
+import 'utils/theme-provider.dart';
 
 class EditScreen extends StatefulWidget {
   final String id;
@@ -41,29 +43,47 @@ class _EditScreenState extends State<EditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    final backgroundColorState =
+        isDarkMode ? backgroundColor : const Color(0xFF2E808C);
+    final textColor = isDarkMode ? Colors.white : Colors.black;
+    final borderColor = isDarkMode ? const Color(0xFF23636C) : Colors.black;
+    final logoAsset =
+        isDarkMode ? 'assets/safe-dark.svg' : 'assets/safe-light.svg';
+
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: backgroundColorState,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(121),
         child: Container(
           height: 121,
-          decoration: const BoxDecoration(
-            color: backgroundColor,
+          decoration: BoxDecoration(
+            color: backgroundColorState,
             border: Border(
-              bottom: BorderSide(color: Color(0xFF23636C), width: 1),
+              bottom: BorderSide(color: borderColor, width: 1),
             ),
           ),
           padding: const EdgeInsets.only(left: 21, top: 40, right: 12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const SafeLogo(),
-              IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
-                onPressed: () => Navigator.pop(context),
+              SafeLogo(asset: logoAsset),
+              Row(
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.brightness_6, color: textColor),
+                    onPressed: () => themeProvider.toggleTheme(),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close, color: textColor),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
               ),
             ],
           ),
@@ -79,34 +99,25 @@ class _EditScreenState extends State<EditScreen> {
                 width: screenWidth * 0.87,
                 child: TextField(
                   controller: _titleController,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: textColor,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Título',
-                    hintStyle: TextStyle(color: Colors.white54),
+                    hintStyle: TextStyle(color: textColor.withOpacity(0.54)),
                     border: UnderlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Color(0xFF23636C),
-                        width: 1,
-                      ),
+                      borderSide: BorderSide(color: borderColor, width: 1),
                     ),
                     enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Color(0xFF23636C),
-                        width: 1,
-                      ),
+                      borderSide: BorderSide(color: borderColor, width: 1),
                     ),
                     focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Color(0xFF23636C),
-                        width: 1,
-                      ),
+                      borderSide: BorderSide(color: borderColor, width: 1),
                     ),
                     filled: true,
-                    fillColor: Color(0xFF00252D),
+                    fillColor: backgroundColorState,
                   ),
                   textAlign: TextAlign.left,
                 ),
@@ -119,34 +130,25 @@ class _EditScreenState extends State<EditScreen> {
                   controller: _noteController,
                   maxLines: null,
                   expands: true,
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  style: TextStyle(color: textColor, fontSize: 16),
                   textAlignVertical: TextAlignVertical.top,
                   decoration: InputDecoration(
                     hintText: 'Anotação',
-                    hintStyle: const TextStyle(color: Colors.white54),
+                    hintStyle: TextStyle(color: textColor.withOpacity(0.54)),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF23636C),
-                        width: 1,
-                      ),
+                      borderSide: BorderSide(color: borderColor, width: 1),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF23636C),
-                        width: 1,
-                      ),
+                      borderSide: BorderSide(color: borderColor, width: 1),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF23636C),
-                        width: 1,
-                      ),
+                      borderSide: BorderSide(color: borderColor, width: 1),
                     ),
                     filled: true,
-                    fillColor: const Color(0xFF00252D),
+                    fillColor: backgroundColorState,
                   ),
                 ),
               ),
@@ -160,14 +162,11 @@ class _EditScreenState extends State<EditScreen> {
                     height: 42,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF00252D),
+                        backgroundColor: backgroundColorState,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
                         ),
-                        side: const BorderSide(
-                          color: Color(0xFF23636C),
-                          width: 1,
-                        ),
+                        side: BorderSide(color: borderColor, width: 1),
                       ),
                       onPressed: () async {
                         final updatedTitle = _titleController.text.trim();
@@ -207,9 +206,9 @@ class _EditScreenState extends State<EditScreen> {
                           );
                         }
                       },
-                      child: const Text(
+                      child: Text(
                         'Salvar',
-                        style: TextStyle(color: Colors.white, fontSize: 14),
+                        style: TextStyle(color: textColor, fontSize: 14),
                       ),
                     ),
                   ),
