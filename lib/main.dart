@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
-import 'home.dart';
+import 'package:provider/provider.dart';
+import 'login.dart';
 import 'styles.dart';
 import 'edit.dart' as edit;
 import 'add.dart' as add;
+import 'utils/theme-provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -13,14 +21,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return MaterialApp(
       title: 'Safe',
       theme: ThemeData(
+        brightness:
+            themeProvider.isDarkMode ? Brightness.dark : Brightness.light,
         primaryColor: backgroundColor,
         scaffoldBackgroundColor: backgroundColor,
+        textTheme: GoogleFonts.baiJamjureeTextTheme(
+          Theme.of(context).textTheme,
+        ),
         useMaterial3: true,
       ),
-      home: const Home(),
+      home: const Login(),
       debugShowCheckedModeBanner: false,
       onGenerateRoute: (settings) {
         if (settings.name == '/edit') {
