@@ -22,11 +22,18 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   List<Map<String, String>> notes = [];
   bool isLoading = true;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     fetchNotes();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   void fetchNotes() async {
@@ -86,6 +93,51 @@ class _HomeState extends State<Home> {
         if (mounted) {
           setState(() => isLoading = false);
           showErrorNotification(context, 'Erro ao buscar anotações por data');
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => isLoading = false);
+        showErrorNotification(context, 'Falha na conexão com o servidor');
+      }
+    }
+  }
+
+  void searchNotes(String query) async {
+    if (query.trim().isEmpty) {
+      fetchNotes();
+      return;
+    }
+
+    setState(() => isLoading = true);
+    try {
+      final response = await http.get(
+        Uri.parse(
+          'http://localhost:3333/notes/search?query=${Uri.encodeComponent(query)}',
+        ),
+      );
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> json = jsonDecode(response.body);
+        final List data = json['notes'] ?? [];
+        if (mounted) {
+          setState(() {
+            notes = data
+                .map<Map<String, String>>(
+                  (note) => {
+                    'id': note['id'] ?? '',
+                    'title': note['title'] ?? '',
+                    'note': note['content'] ?? '',
+                    'createdAt': note['createdAt'] ?? '',
+                  },
+                )
+                .toList();
+            isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() => isLoading = false);
+          showErrorNotification(context, 'Erro ao buscar anotações');
         }
       }
     } catch (_) {
@@ -234,6 +286,7 @@ class _HomeState extends State<Home> {
                           children: [
                             Expanded(
                               child: TextField(
+                                controller: _searchController,
                                 style: TextStyle(color: textColor),
                                 textAlignVertical: TextAlignVertical.center,
                                 decoration: InputDecoration(
@@ -247,6 +300,9 @@ class _HomeState extends State<Home> {
                                     vertical: 12,
                                   ),
                                 ),
+                                onSubmitted: (value) {
+                                  searchNotes(value);
+                                },
                               ),
                             ),
                             GestureDetector(
@@ -259,11 +315,16 @@ class _HomeState extends State<Home> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            SvgPicture.asset(
-                              'assets/search.svg',
-                              width: 20,
-                              height: 20,
-                              color: textColor,
+                            GestureDetector(
+                              onTap: () {
+                                searchNotes(_searchController.text);
+                              },
+                              child: SvgPicture.asset(
+                                'assets/search.svg',
+                                width: 20,
+                                height: 20,
+                                color: textColor,
+                              ),
                             ),
                           ],
                         ),
