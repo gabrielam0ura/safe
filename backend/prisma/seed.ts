@@ -1,4 +1,10 @@
 import { PrismaClient } from '@prisma/client'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
 
 const prisma = new PrismaClient()
 
@@ -11,6 +17,7 @@ async function main() {
       name: 'SafeUser',
       email: 'safeuser@user.com',
       password_hash: "Saf3Password",
+      created_at: dayjs().utc().subtract(3, 'hour').toDate()
     },
   })
 

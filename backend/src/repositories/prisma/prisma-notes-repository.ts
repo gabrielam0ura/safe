@@ -2,10 +2,20 @@ import { prisma } from '@/lib/prisma'
 import type { Note, Prisma } from '@prisma/client'
 import type { NotesRepository } from '../notes-repository'
 
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+
+dayjs.extend(utc)
+
 export class PrismaNotesRepository implements NotesRepository {
   async create(data: Prisma.NoteUncheckedCreateInput){
       const note = await prisma.note.create({
-        data
+        data: {
+          ...data,
+          createdAt: dayjs().utc().subtract(3, 'hour').toDate(),
+          updatedAt: dayjs().utc().subtract(3, 'hour').toDate(),
+        },
+        
       })
       return note
   }
@@ -81,6 +91,7 @@ export class PrismaNotesRepository implements NotesRepository {
       data: {
         title: data.title,
         content: data.content,
+        updatedAt: dayjs().utc().subtract(3, 'hour').toDate(),
       },
     })
 
