@@ -37,12 +37,16 @@ class _HomeState extends State<Home> {
         final List data = json['notes'] ?? [];
         if (mounted) {
           setState(() {
-            notes = data.map<Map<String, String>>((note) => {
-              'id': note['id'] ?? '',
-              'title': note['title'] ?? '',
-              'note': note['content'] ?? '',
-              'createdAt': note['createdAt'] ?? '',
-            }).toList();
+            notes = data
+                .map<Map<String, String>>(
+                  (note) => {
+                    'id': note['id'] ?? '',
+                    'title': note['title'] ?? '',
+                    'note': note['content'] ?? '',
+                    'createdAt': note['createdAt'] ?? '',
+                  },
+                )
+                .toList();
             isLoading = false;
           });
         }
@@ -51,6 +55,72 @@ class _HomeState extends State<Home> {
       }
     } catch (_) {
       if (mounted) setState(() => isLoading = false);
+    }
+  }
+
+  void fetchNotesByDate(String date) async {
+    setState(() => isLoading = true);
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:3333/notes/search/date?date=$date'),
+      );
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> json = jsonDecode(response.body);
+        final List data = json['notes'] ?? [];
+        if (mounted) {
+          setState(() {
+            notes = data
+                .map<Map<String, String>>(
+                  (note) => {
+                    'id': note['id'] ?? '',
+                    'title': note['title'] ?? '',
+                    'note': note['content'] ?? '',
+                    'createdAt': note['createdAt'] ?? '',
+                  },
+                )
+                .toList();
+            isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() => isLoading = false);
+          showErrorNotification(context, 'Erro ao buscar anotações por data');
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => isLoading = false);
+        showErrorNotification(context, 'Falha na conexão com o servidor');
+      }
+    }
+  }
+
+  Future<void> _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: const Color(0xFF2E808C),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      final String formattedDate =
+          "${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+      fetchNotesByDate(formattedDate);
     }
   }
 
@@ -70,13 +140,15 @@ class _HomeState extends State<Home> {
         Uri.parse('http://localhost:3333/notes/${note["id"]}'),
       );
       if (response.statusCode == 204) {
-        if (mounted) showSuccessNotification(context, 'Anotação deletada com sucesso');
+        if (mounted)
+          showSuccessNotification(context, 'Anotação deletada com sucesso');
         fetchNotes();
       } else {
         if (mounted) showErrorNotification(context, 'Erro ao deletar anotação');
       }
     } catch (_) {
-      if (mounted) showErrorNotification(context, 'Falha na conexão com o servidor');
+      if (mounted)
+        showErrorNotification(context, 'Falha na conexão com o servidor');
     }
   }
 
@@ -85,10 +157,14 @@ class _HomeState extends State<Home> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
 
-    Color backgroundColorState = isDarkMode ? backgroundColor : const Color(0xFF2E808C);
+    Color backgroundColorState = isDarkMode
+        ? backgroundColor
+        : const Color(0xFF2E808C);
     Color textColor = isDarkMode ? Colors.white : Colors.black;
     Color borderColor = isDarkMode ? const Color(0xFF23636C) : Colors.black;
-    String logoAsset = isDarkMode ? 'assets/safe-dark.svg' : 'assets/safe-light.svg';
+    String logoAsset = isDarkMode
+        ? 'assets/safe-dark.svg'
+        : 'assets/safe-light.svg';
 
     return Scaffold(
       backgroundColor: backgroundColorState,
@@ -100,7 +176,9 @@ class _HomeState extends State<Home> {
               height: 121,
               decoration: BoxDecoration(
                 color: backgroundColorState,
-                border: Border(bottom: BorderSide(color: borderColor, width: 1)),
+                border: Border(
+                  bottom: BorderSide(color: borderColor, width: 1),
+                ),
               ),
               padding: const EdgeInsets.only(left: 21, top: 40, right: 12),
               child: Row(
@@ -116,12 +194,17 @@ class _HomeState extends State<Home> {
                       IconButton(
                         icon: Icon(EvaIcons.logOut, color: textColor),
                         onPressed: () {
-                          Navigator.of(context).pushReplacement(PageRouteBuilder(
-                            pageBuilder: (_, __, ___) => const Login(),
-                            transitionsBuilder: (_, animation, __, child) {
-                              return FadeTransition(opacity: animation, child: child);
-                            },
-                          ));
+                          Navigator.of(context).pushReplacement(
+                            PageRouteBuilder(
+                              pageBuilder: (_, __, ___) => const Login(),
+                              transitionsBuilder: (_, animation, __, child) {
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: child,
+                                );
+                              },
+                            ),
+                          );
                         },
                       ),
                     ],
@@ -155,18 +238,25 @@ class _HomeState extends State<Home> {
                                 textAlignVertical: TextAlignVertical.center,
                                 decoration: InputDecoration(
                                   hintText: 'Pesquise...',
-                                  hintStyle: TextStyle(color: textColor.withOpacity(0.6)),
+                                  hintStyle: TextStyle(
+                                    color: textColor.withOpacity(0.6),
+                                  ),
                                   border: InputBorder.none,
                                   isCollapsed: true,
-                                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
                                 ),
                               ),
                             ),
-                            SvgPicture.asset(
-                              'assets/calendar.svg',
-                              width: 20,
-                              height: 20,
-                              color: textColor,
+                            GestureDetector(
+                              onTap: _selectDate,
+                              child: SvgPicture.asset(
+                                'assets/calendar.svg',
+                                width: 20,
+                                height: 20,
+                                color: textColor,
+                              ),
                             ),
                             const SizedBox(width: 8),
                             SvgPicture.asset(
@@ -181,12 +271,17 @@ class _HomeState extends State<Home> {
                       const SizedBox(width: 8),
                       InkWell(
                         onTap: () async {
-                          final result = await Navigator.of(context).push(PageRouteBuilder(
-                            pageBuilder: (_, __, ___) => const AddScreen(),
-                            transitionsBuilder: (_, animation, __, child) {
-                              return FadeTransition(opacity: animation, child: child);
-                            },
-                          ));
+                          final result = await Navigator.of(context).push(
+                            PageRouteBuilder(
+                              pageBuilder: (_, __, ___) => const AddScreen(),
+                              transitionsBuilder: (_, animation, __, child) {
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: child,
+                                );
+                              },
+                            ),
+                          );
                           if (result != null &&
                               result is Map<String, dynamic> &&
                               result['success'] == true) {
@@ -205,7 +300,11 @@ class _HomeState extends State<Home> {
                   const SizedBox(height: 12),
                   Expanded(
                     child: isLoading
-                        ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          )
                         : ListView.builder(
                             itemCount: notes.length,
                             itemBuilder: (context, index) {
@@ -217,17 +316,28 @@ class _HomeState extends State<Home> {
                                   createdAt: notes[index]['createdAt']!,
                                   onDelete: () => deleteNoteLocally(index),
                                   onEdit: () async {
-                                    final result = await Navigator.of(context).push(PageRouteBuilder(
-                                      pageBuilder: (_, __, ___) => EditScreen(
-                                        id: notes[index]['id']!,
-                                        initialTitle: notes[index]['title']!,
-                                        initialNote: notes[index]['note']!,
-                                      ),
-                                      transitionsBuilder: (_, animation, __, child) {
-                                        return FadeTransition(opacity: animation, child: child);
-                                      },
-                                    ));
-                                    if (result != null && result is Map<String, String>) {
+                                    final result = await Navigator.of(context)
+                                        .push(
+                                          PageRouteBuilder(
+                                            pageBuilder: (_, __, ___) =>
+                                                EditScreen(
+                                                  id: notes[index]['id']!,
+                                                  initialTitle:
+                                                      notes[index]['title']!,
+                                                  initialNote:
+                                                      notes[index]['note']!,
+                                                ),
+                                            transitionsBuilder:
+                                                (_, animation, __, child) {
+                                                  return FadeTransition(
+                                                    opacity: animation,
+                                                    child: child,
+                                                  );
+                                                },
+                                          ),
+                                        );
+                                    if (result != null &&
+                                        result is Map<String, String>) {
                                       editNoteLocally(index, {
                                         'id': notes[index]['id']!,
                                         'title': result['title']!,
@@ -305,7 +415,10 @@ class NoteCard extends StatelessWidget {
               ),
               Text(
                 createdAt.split('T').first,
-                style: TextStyle(color: textColor.withOpacity(0.7), fontSize: 12),
+                style: TextStyle(
+                  color: textColor.withOpacity(0.7),
+                  fontSize: 12,
+                ),
               ),
               const SizedBox(width: 8),
               Row(
