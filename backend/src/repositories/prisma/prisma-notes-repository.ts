@@ -47,6 +47,9 @@ export class PrismaNotesRepository implements NotesRepository {
         },
         userId,
       },
+      orderBy: {
+        updatedAt: 'desc',
+      }
     })
 
     return notes
@@ -61,6 +64,9 @@ export class PrismaNotesRepository implements NotesRepository {
           },
           userId,
         },
+        orderBy: {
+          updatedAt: 'desc',
+        }
       })
   
       return notes
