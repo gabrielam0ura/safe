@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
+import { randomUUID } from 'crypto'
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
@@ -23,12 +24,14 @@ async function main() {
 
   console.log('Usuário padrão criado:', user)
 
+  const noteIds = [randomUUID(), randomUUID(), randomUUID(), randomUUID()]
+
   const notes = await Promise.all([
     prisma.note.upsert({
-      where: { id: 'note-1' },
+      where: { id: noteIds[0] },
       update: {},
       create: {
-        id: 'note-1',
+        id: noteIds[0],
         title: 'Primeira Anotação',
         content: 'Esta é minha primeira anotação no app Safe.',
         createdAt: new Date('2025-07-13T10:00:00Z'),
@@ -36,10 +39,10 @@ async function main() {
       },
     }),
     prisma.note.upsert({
-      where: { id: 'note-2' },
+      where: { id: noteIds[1] },
       update: {},
       create: {
-        id: 'note-2',
+        id: noteIds[1],
         title: 'Lista de Compras',
         content: 'Leite, pão, ovos, frutas e verduras.',
         createdAt: new Date('2024-07-15T14:30:00Z'),
@@ -47,10 +50,10 @@ async function main() {
       },
     }),
     prisma.note.upsert({
-      where: { id: 'note-3' },
+      where: { id: noteIds[2] },
       update: {},
       create: {
-        id: 'note-3',
+        id: noteIds[2],
         title: '8 meses',
         content: 'Comemorar 8 meses de namoro (te amo milady).',
         createdAt: new Date('2025-07-16T09:15:00Z'),
@@ -58,10 +61,10 @@ async function main() {
       },
     }),
     prisma.note.upsert({
-      where: { id: 'note-4' },
+      where: { id: noteIds[3] },
       update: {},
       create: {
-        id: 'note-4',
+        id: noteIds[3],
         title: 'Lembretes Importantes',
         content: 'Reunião às 15h, pagar contas, ligar para o médico.',
         createdAt: new Date('2025-07-17T16:45:00Z'),
