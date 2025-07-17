@@ -54,6 +54,7 @@ export class PrismaNotesRepository implements NotesRepository {
       where: {
         title: {
           contains: query,
+          mode: 'insensitive',
         },
         userId,
       },
