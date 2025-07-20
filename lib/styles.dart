@@ -27,5 +27,5 @@ final InputDecoration inputDecoration = InputDecoration(
   errorStyle: TextStyle(height: 0),
 );
 
-const correctUsername = 'gabrielam0ura';
-const correctPassword = 'gabriela123';
+const correctUsername = 'SafeUser';
+const correctPassword = 'Saf3Password';
